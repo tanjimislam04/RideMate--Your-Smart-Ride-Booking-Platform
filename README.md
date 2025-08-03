@@ -49,7 +49,7 @@ Menu-driven, user-friendly, and highly extendable for real-world learning.
 
 - "[x] Core version with linked list-based storage"
 - "[x] Modular structure & menu-driven UI"
-- "[ ] Strict input validation & error handling"
+- "[x] Strict input validation & error handling"
 - "[ ] Role-based authentication (Admin/Customer/Driver)"
 - "[ ] Advanced features (CSV export/import, search/filter, analytics, soft delete)"
 - "[ ] Pro-level features (promo code, calendar view, graphical output, etc.)"
