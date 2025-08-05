@@ -24,25 +24,26 @@ int main()
     loadRentals(&rentalHead);
 
     int running = 1;
+    char input[10];
+
     while (running)
     {
         displayMainMenu();
-        int choice;
-        printf("Enter your choice: ");
-        scanf("%d", &choice);
-        getchar();
+        getInput("Enter your choice: ", input, sizeof(input));
+        if (!isValidNumber(input))
+        {
+            printf("Invalid input! Please enter a number.\n");
+            continue;
+        }
+        int choice = atoi(input);
 
         switch (choice)
         {
         case 1:
         { // Customer Login
             char username[50], password[50];
-            printf("Enter username: ");
-            fgets(username, sizeof(username), stdin);
-            username[strcspn(username, "\n")] = 0;
-            printf("Enter password: ");
-            fgets(password, sizeof(password), stdin);
-            password[strcspn(password, "\n")] = 0;
+            getInput("Enter username: ", username, sizeof(username));
+            getInput("Enter password: ", password, sizeof(password));
             Customer *loggedIn = authenticateCustomer(customerHead, username, password);
             if (loggedIn)
             {
@@ -61,12 +62,8 @@ int main()
         case 3:
         { // Admin Login
             char adminUsername[50], adminPassword[50];
-            printf("Enter admin username: ");
-            fgets(adminUsername, sizeof(adminUsername), stdin);
-            adminUsername[strcspn(adminUsername, "\n")] = 0;
-            printf("Enter admin password: ");
-            fgets(adminPassword, sizeof(adminPassword), stdin);
-            adminPassword[strcspn(adminPassword, "\n")] = 0;
+            getInput("Enter admin username: ", adminUsername, sizeof(adminUsername));
+            getInput("Enter admin password: ", adminPassword, sizeof(adminPassword));
             if (authenticateAdmin(adminUsername, adminPassword))
             {
                 printf("Admin login successful!\n");
@@ -103,6 +100,7 @@ void displayMainMenu()
 
 void adminMenu()
 {
+    char input[10];
     int option;
     while (1)
     {
@@ -111,9 +109,13 @@ void adminMenu()
         printf("2. Manage Customers\n");
         printf("3. View Rentals\n");
         printf("4. Back to Main Menu\n");
-        printf("Enter your choice: ");
-        scanf("%d", &option);
-        getchar();
+        getInput("Enter your choice: ", input, sizeof(input));
+        if (!isValidNumber(input))
+        {
+            printf("Invalid input! Please enter a number.\n");
+            continue;
+        }
+        option = atoi(input);
 
         switch (option)
         {
@@ -136,6 +138,7 @@ void adminMenu()
 
 void customerMenu(Customer *current)
 {
+    char input[10];
     int option;
     while (1)
     {
@@ -146,9 +149,13 @@ void customerMenu(Customer *current)
         printf("4. Rent a Vehicle\n");
         printf("5. View My Rentals\n");
         printf("6. Logout\n");
-        printf("Enter your choice: ");
-        scanf("%d", &option);
-        getchar();
+        getInput("Enter your choice: ", input, sizeof(input));
+        if (!isValidNumber(input))
+        {
+            printf("Invalid input! Please enter a number.\n");
+            continue;
+        }
+        option = atoi(input);
 
         switch (option)
         {
