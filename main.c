@@ -164,6 +164,7 @@ void customerMenu(Customer *current)
             break;
         case 2:
             updateCustomerProfile(current);
+            saveCustomers(customerHead);
             break;
         case 3:
             displayAvailableVehicles(vehicleHead);
