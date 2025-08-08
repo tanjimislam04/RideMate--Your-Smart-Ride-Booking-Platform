@@ -218,7 +218,6 @@ void updateCustomerProfile(Customer *c)
         strcpy(c->password, buf);
 
     printf("Profile updated.\n");
-    saveCustomers(c); // <-- Add this if you want auto-save
 }
 
 void displayAllCustomers(Customer *head)
