@@ -1,3 +1,4 @@
+// main.c
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -6,25 +7,25 @@
 #include "customer.h"
 #include "rental.h"
 
-// Declare linked list heads (global pointers)
+// Global linked-list heads
 Vehicle *vehicleHead = NULL;
 Customer *customerHead = NULL;
 Rental *rentalHead = NULL;
 
-// Function prototypes
-void displayMainMenu();
-void adminMenu();
-void customerMenu(Customer *current);
+// Menus
+static void displayMainMenu(void);
+static void adminMenu(void);
+static void customerMenu(Customer *current);
 
-int main()
+int main(void)
 {
-    // Load all system data into linked lists
+    // Load all system data
     loadVehicles(&vehicleHead);
     loadCustomers(&customerHead);
     loadRentals(&rentalHead);
 
     int running = 1;
-    char input[10];
+    char input[16];
 
     while (running)
     {
@@ -44,8 +45,9 @@ int main()
             char username[50], password[50];
             getInput("Enter username: ", username, sizeof(username));
             getInput("Enter password: ", password, sizeof(password));
+
             Customer *loggedIn = authenticateCustomer(customerHead, username, password);
-            if (loggedIn)
+            if (loggedIn && loggedIn->active)
             {
                 printf("Login successful! Welcome, %s\n", loggedIn->name);
                 customerMenu(loggedIn);
@@ -56,9 +58,10 @@ int main()
             }
             break;
         }
-        case 2:
+        case 2: // New Customer Registration
             registerCustomer(&customerHead);
             break;
+
         case 3:
         { // Admin Login
             char adminUsername[50], adminPassword[50];
@@ -75,13 +78,15 @@ int main()
             }
             break;
         }
-        case 4:
-            printf("Exiting the program...\n");
+
+        case 4: // Exit
+            printf("Saving data and exiting...\n");
             saveVehicles(vehicleHead);
             saveCustomers(customerHead);
             saveRentals(rentalHead);
             running = 0;
             break;
+
         default:
             printf("Invalid choice! Please try again.\n");
         }
@@ -89,7 +94,7 @@ int main()
     return 0;
 }
 
-void displayMainMenu()
+static void displayMainMenu(void)
 {
     printf("\n=== RideMate : Your Smart Ride Booking Platform ===\n");
     printf("1. Customer Login\n");
@@ -98,10 +103,11 @@ void displayMainMenu()
     printf("4. Exit\n");
 }
 
-void adminMenu()
+static void adminMenu(void)
 {
-    char input[10];
+    char input[16];
     int option;
+
     while (1)
     {
         printf("\n=== Admin Menu ===\n");
@@ -120,15 +126,19 @@ void adminMenu()
         switch (option)
         {
         case 1:
-            adminVehicleMenu(&vehicleHead);
+            adminVehicleMenu(&vehicleHead); // from vehicle.c
             break;
         case 2:
-            adminCustomerMenu(&customerHead);
+            adminCustomerMenu(&customerHead); // from customer.c
             break;
         case 3:
-            displayAllRentals(rentalHead);
+            displayAllRentals(rentalHead); // from rental.c (can be stubbed for now)
             break;
         case 4:
+            // Persist data whenever you return
+            saveVehicles(vehicleHead);
+            saveCustomers(customerHead);
+            saveRentals(rentalHead);
             return;
         default:
             printf("Invalid choice! Please try again.\n");
@@ -136,17 +146,18 @@ void adminMenu()
     }
 }
 
-void customerMenu(Customer *current)
+static void customerMenu(Customer *current)
 {
-    char input[10];
+    char input[16];
     int option;
+
     while (1)
     {
         printf("\n=== Customer Menu ===\n");
         printf("1. View Profile\n");
         printf("2. Update Profile\n");
         printf("3. View Available Vehicles\n");
-        printf("4. Rent a Vehicle\n");
+        printf("4. Rent a Vehicle (hour/day/route)\n");
         printf("5. View My Rentals\n");
         printf("6. Logout\n");
         getInput("Enter your choice: ", input, sizeof(input));
@@ -160,24 +171,35 @@ void customerMenu(Customer *current)
         switch (option)
         {
         case 1:
-            displayCustomer(current);
+            displayCustomer(current); // from customer.c
             break;
+
         case 2:
-            updateCustomerProfile(current);
+            updateCustomerProfile(current); // from customer.c
             saveCustomers(customerHead);
             break;
+
         case 3:
-            displayAvailableVehicles(vehicleHead);
+            displayAvailableVehicles(vehicleHead); // from vehicle.c
             break;
+
         case 4:
+            // Implement in rental.c (hourly/daily/route booking flow)
             createRentalByCustomer(&rentalHead, vehicleHead, current);
+            // Optional: save immediately after booking
+            saveRentals(rentalHead);
+            saveVehicles(vehicleHead);
             break;
+
         case 5:
-            displayRentalsByCustomer(rentalHead, current->id);
+            displayRentalsByCustomer(rentalHead, current->id); // from rental.c
             break;
+
         case 6:
-            printf("Logging out...\n");
+            // Persist any profile changes on logout
+            saveCustomers(customerHead);
             return;
+
         default:
             printf("Invalid choice! Please try again.\n");
         }
