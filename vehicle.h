@@ -7,10 +7,10 @@
 
 typedef enum
 {
-    VTYPE_CAR = 1,
-    VTYPE_MOTORCYCLE = 2,
-    VTYPE_TRUCK = 3,
-    VTYPE_VAN = 4
+    VEH_CAR = 0,
+    VEH_MOTORCYCLE = 1,
+    VEH_TRUCK = 2,
+    VEH_VAN = 3
 } VehicleType;
 
 typedef struct Vehicle
@@ -20,23 +20,22 @@ typedef struct Vehicle
     char model[50];
     int year;
     VehicleType type;
-    float ratePerHour;
     float ratePerDay;
-    int available; /* 1 = available, 0 = not available */
-    int active;    /* 1 = active, 0 = soft-deleted */
-    char licensePlate[20];
-
+    float ratePerHour;
+    int active;    /* 1 = active (not soft-deleted) */
+    int available; /* 1 = available to rent */
     struct Vehicle *next;
 } Vehicle;
 
 typedef struct Route
 {
     int id;
-    char start[50];
-    char end[50];
+    char name[64];
+    char from[64];
+    char to[64];
     float baseFare;
-    int etaMin; /* estimated minutes */
-
+    int etaMin; /* minutes */
+    int active; /* 1 = active (not soft-deleted) */
     struct Route *next;
 } Route;
 
@@ -44,25 +43,21 @@ typedef struct Route
 extern Route *routeHead;
 
 /* ===== Vehicle CSV I/O ===== */
-void loadVehicles(Vehicle **head);
+void loadVehicles(Vehicle **headRef);
 void saveVehicles(Vehicle *head);
 
 /* ===== Route CSV I/O ===== */
-void loadRoutes(Route **head);
+void loadRoutes(Route **headRef);
 void saveRoutes(Route *head);
 
-/* ===== Admin Menus ===== */
-void adminVehicleMenu(Vehicle **head);
-void adminRoutesMenu(Route **rhead);
+/* ===== Admin Menu ===== */
+void adminVehicleMenu(Vehicle **headRef);
 
 /* ===== Helpers used by other modules ===== */
 void displayAvailableVehicles(Vehicle *head);
 Vehicle *findVehicleById(Vehicle *head, int id);
 
-void displayAllRoutes(Route *rhead);
-Route *findRouteById(Route *rhead, int routeId);
-
-/* ===== Pretty strings ===== */
-const char *vehicleTypeStr(VehicleType t);
+void displayAllRoutes(Route *head);
+Route *findRouteById(Route *head, int id);
 
 #endif /* VEHICLE_H */
