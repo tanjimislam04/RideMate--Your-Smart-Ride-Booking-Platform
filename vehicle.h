@@ -1,34 +1,68 @@
 #ifndef VEHICLE_H
 #define VEHICLE_H
 
+#include <stdio.h>
+
+/* ===== Vehicle & Route Types ===== */
+
+typedef enum
+{
+    VTYPE_CAR = 1,
+    VTYPE_MOTORCYCLE = 2,
+    VTYPE_TRUCK = 3,
+    VTYPE_VAN = 4
+} VehicleType;
+
 typedef struct Vehicle
 {
     int id;
+    char make[50];
     char model[50];
-    char type[30];        // e.g., "Car", "Microbus", "Bike"
-    int available;        // 1=available, 0=not available
-    float price_per_hour; // Hourly rent rate
-    float price_per_day;  // Daily rent rate
-    int popularity;       // Number of times rented
-    int mileage;          // in kilometers (for sorting/filter)
-    int active;           // For soft delete (1=active, 0=inactive)
+    int year;
+    VehicleType type;
+    float ratePerHour;
+    float ratePerDay;
+    int available; /* 1 = available, 0 = not available */
+    int active;    /* 1 = active, 0 = soft-deleted */
+    char licensePlate[20];
+
     struct Vehicle *next;
 } Vehicle;
 
-// Vehicle file I/O
+typedef struct Route
+{
+    int id;
+    char start[50];
+    char end[50];
+    float baseFare;
+    int etaMin; /* estimated minutes */
+
+    struct Route *next;
+} Route;
+
+/* Global route list head (used by rental.c) */
+extern Route *routeHead;
+
+/* ===== Vehicle CSV I/O ===== */
 void loadVehicles(Vehicle **head);
 void saveVehicles(Vehicle *head);
 
-// CRUD operations
-void addVehicle(Vehicle **head);
-void updateVehicle(Vehicle *head);
-void softDeleteVehicle(Vehicle *head);
+/* ===== Route CSV I/O ===== */
+void loadRoutes(Route **head);
+void saveRoutes(Route *head);
+
+/* ===== Admin Menus ===== */
+void adminVehicleMenu(Vehicle **head);
+void adminRoutesMenu(Route **rhead);
+
+/* ===== Helpers used by other modules ===== */
+void displayAvailableVehicles(Vehicle *head);
 Vehicle *findVehicleById(Vehicle *head, int id);
 
-void displayAvailableVehicles(Vehicle *head);
-void displayAllVehicles(Vehicle *head);
+void displayAllRoutes(Route *rhead);
+Route *findRouteById(Route *rhead, int routeId);
 
-// Admin menu
-void adminVehicleMenu(Vehicle **head);
+/* ===== Pretty strings ===== */
+const char *vehicleTypeStr(VehicleType t);
 
-#endif
+#endif /* VEHICLE_H */
