@@ -3,6 +3,9 @@
 
 // Input validation
 
+// Removes leading and trailing whitespace from a string
+void trimNewline(char *str);
+
 // Returns 1 if email format is valid, otherwise 0
 int isValidEmail(const char *email);
 
@@ -20,13 +23,13 @@ void clearInputBuffer();
 
 // String utilities
 
-// Removes leading and trailing whitespace from a string
-void trimNewline(char *str);
-
 // Unique ID generator (for core version, simple counter-based)
 int generateUniqueId();
 
 // File exists check
 int fileExists(const char *filename);
+
+// Admin authentication
+int authenticateAdmin(const char *username, const char *password);
 
 #endif

@@ -92,3 +92,10 @@ int fileExists(const char *filename)
     }
     return 0; // File does not exist
 }
+
+// Admin authentication (simple hardcoded for core version)
+int authenticateAdmin(const char *username, const char *password)
+{
+    /* Simple hardcoded creds for core MVP; replace with hashed storage later */
+    return (strcmp(username, "admin") == 0 && strcmp(password, "admin123") == 0);
+}

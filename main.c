@@ -24,6 +24,7 @@ int main(void)
     loadVehicles(&vehicleHead);   // vehicles.csv (+ routes loaded inside vehicle module if you do it there)
     loadCustomers(&customerHead); // customers.csv
     loadRentals(&rentalHead);     // rentals.csv
+    loadRoutes(&routeHead);
 
     int running = 1;
     char input[16];
