@@ -7,11 +7,13 @@
 #include "customer.h"
 #include "rental.h"
 #include "search.h"
+#include "reports.h"
 
 // Linked-list heads (globals)
 Vehicle *vehicleHead = NULL;
 Customer *customerHead = NULL;
 Rental *rentalHead = NULL;
+Route *routeHead = NULL;
 
 // Menus
 static void displayMainMenu(void);
@@ -119,9 +121,10 @@ static void adminMenu(void)
         printf("2. Manage Customers\n");
         printf("3. Manage/View Rentals\n");
         printf("4. Advanced Search & Filter\n");
-        printf("5. Dashboard/Statistics\n"); // <-- Add this line
-        printf("6. Save All\n");
-        printf("7. Back to Main Menu\n");
+        printf("5. Dashboard/Statistics\n");
+        printf("6. Generate Reports\n");
+        printf("7. Save All\n");
+        printf("8. Back to Main Menu\n");
 
         getInput("Enter your choice: ", input, sizeof(input));
         if (!isValidNumber(input))
@@ -146,15 +149,18 @@ static void adminMenu(void)
             adminSearchMenu(vehicleHead, rentalHead);
             break;
         case 5:
-            showAdminDashboard(vehicleHead, customerHead, rentalHead); // <-- Call dashboard here
+            showAdminDashboard(vehicleHead, customerHead, rentalHead);
             break;
         case 6:
+            adminReportsMenu(vehicleHead, customerHead, rentalHead);
+            break;
+        case 7:
             saveVehicles(vehicleHead);
             saveCustomers(customerHead);
             saveRentals(rentalHead);
             printf("All data saved.\n");
             break;
-        case 7:
+        case 8:
             return;
         default:
             printf("Invalid choice! Please try again.\n");
