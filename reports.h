@@ -9,6 +9,5 @@
 #include "rental.h"
 
 // The main menu function for the reports module, called from the admin panel.
-void adminReportsMenu(Vehicle* vehicleHead, Rental* rentalHead);
-
+void adminReportsMenu(Vehicle* vehicleHead, Customer* customerHead, Rental* rentalHead);
 #endif // REPORT_H
