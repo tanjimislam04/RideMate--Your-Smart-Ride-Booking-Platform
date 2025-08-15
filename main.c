@@ -6,6 +6,7 @@
 #include "vehicle.h"
 #include "customer.h"
 #include "rental.h"
+#include "search.h"
 
 // Linked-list heads (globals)
 Vehicle *vehicleHead = NULL;
@@ -117,8 +118,9 @@ static void adminMenu(void)
         printf("1. Manage Vehicles (incl. Routes)\n");
         printf("2. Manage Customers\n");
         printf("3. Manage/View Rentals\n");
-        printf("4. Save All\n");
-        printf("5. Back to Main Menu\n");
+        printf("4. Advanced Search & Filter\n");
+        printf("5. Save All\n");
+        printf("6. Back to Main Menu\n");
 
         getInput("Enter your choice: ", input, sizeof(input));
         if (!isValidNumber(input))
@@ -138,15 +140,18 @@ static void adminMenu(void)
             adminCustomerMenu(&customerHead);
             break;
         case 3:
-            adminRentalsMenu();
+            displayAllRentals(rentalHead);
             break;
         case 4:
+            adminSearchMenu(vehicleHead, rentalHead);
+            break;
+        case 5:
             saveVehicles(vehicleHead);
             saveCustomers(customerHead);
             saveRentals(rentalHead);
             printf("All data saved.\n");
             break;
-        case 5:
+        case 6:
             return;
         default:
             printf("Invalid choice! Please try again.\n");
