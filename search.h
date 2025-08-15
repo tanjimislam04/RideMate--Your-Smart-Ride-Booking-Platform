@@ -16,7 +16,12 @@ void filterVehiclesByPrice(Vehicle* head, float maxPrice);
 void searchRentalsByCustomerId(Rental* head, int customerId);
 
 // --- The Admin Sub-Menu for this module ---
-void adminSearchMenu(Vehicle* vehicleHead, Rental* rentalHead);
+void adminSearchMenu(Vehicle** vehicleHead, Rental* rentalHead);
 
+// --- Vehicle Sorting ---
+typedef enum { SORT_PRICE_DAY, SORT_PRICE_HOUR, SORT_YEAR } VehicleSortField;
+typedef enum { SORT_ASC, SORT_DESC } SortOrder;
+
+void sortVehicles(Vehicle **head, VehicleSortField field, SortOrder order);
 
 #endif // SEARCH_H
