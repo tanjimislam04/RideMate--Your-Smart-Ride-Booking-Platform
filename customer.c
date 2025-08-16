@@ -294,3 +294,35 @@ void adminCustomerMenu(Customer **head)
         }
     }
 }
+
+void freeCustomerList(Customer **head)
+{
+    Customer *current = *head;
+    Customer *next;
+    
+    while (current != NULL)
+    {
+        next = current->next;
+        free(current);
+        current = next;
+    }
+    
+    *head = NULL;
+}
+
+void displayCustomerProfile(const Customer *c)
+{
+    if (!c)
+    {
+        printf("Customer not found.\n");
+        return;
+    }
+    
+    printf("\n=== Customer Profile ===\n");
+    printf("ID: %d\n", c->id);
+    printf("Name: %s\n", c->name);
+    printf("Username: %s\n", c->username);
+    printf("Email: %s\n", c->email);
+    printf("Phone: %s\n", c->phone);
+    printf("Status: %s\n", c->active ? "Active" : "Inactive");
+}

@@ -333,6 +333,14 @@ void displayAllRentals(Rental *head)
     }
 }
 
+void displayRental(const Rental *r)
+{
+    if (!r)
+        return;
+    printf("Rental ID: %d | Customer ID: %d | Vehicle ID: %d | Type: %d | Start: %s | End: %s | Cost: %.2f | Status: %d\n",
+           r->id, r->customerId, r->vehicleId, r->type, r->startTime, r->endTime, r->totalCost, r->status);
+}
+
 void displayRentalsByCustomer(Rental *head, int customerId)
 {
     int found = 0;
@@ -519,4 +527,34 @@ void createRentalByCustomer(Rental **rentalHead, Vehicle *vehicleHead, Customer 
     printf("\nRental created!\n");
     printf("Rental ID: %d | Vehicle: %d | Type: %s | Start: %s | End: %s | Cost: $%.2f | Status: %s\n",
            r->id, r->vehicleId, typeStr(r->type), r->startTime, r->endTime, r->totalCost, statusStr(r->status));
+}
+
+void listAllRentals(Rental *head)
+{
+    if (!head)
+    {
+        printf("No rentals found.\n");
+        return;
+    }
+    
+    printf("\n=== All Rentals ===\n");
+    for (Rental *r = head; r; r = r->next)
+    {
+        displayRental(r);
+    }
+}
+
+void freeRentalList(Rental **head)
+{
+    Rental *current = *head;
+    Rental *next;
+    
+    while (current != NULL)
+    {
+        next = current->next;
+        free(current);
+        current = next;
+    }
+    
+    *head = NULL;
 }

@@ -1,63 +1,57 @@
 #ifndef VEHICLE_H
 #define VEHICLE_H
 
-#include <stdio.h>
-
-/* ===== Vehicle & Route Types ===== */
+#include "utils.h"
 
 typedef enum
 {
-    VEH_CAR = 0,
-    VEH_MOTORCYCLE = 1,
-    VEH_TRUCK = 2,
-    VEH_VAN = 3
+    VTYPE_CAR,
+    VTYPE_MOTORCYCLE,
+    VTYPE_TRUCK,
+    VTYPE_VAN
 } VehicleType;
 
-typedef struct Vehicle
+typedef struct RouteNode
 {
     int id;
-    char make[50];
-    char model[50];
-    int year;
-    VehicleType type;
-    float ratePerDay;
-    float ratePerHour;
-    int active;    /* 1 = active (not soft-deleted) */
-    int available; /* 1 = available to rent */
-    struct Vehicle *next;
-} Vehicle;
-
-typedef struct Route
-{
-    int id;
-    char name[64];
-    char from[64];
-    char to[64];
+    char name[MAX_STRING];
+    char from[MAX_STRING];
+    char to[MAX_STRING];
     float baseFare;
-    int etaMin; /* minutes */
-    int active; /* 1 = active (not soft-deleted) */
-    struct Route *next;
+    int etaMin;
+    int active;
+    struct RouteNode *next;
 } Route;
 
-/* Global route list head (used by rental.c) */
+typedef struct VehicleNode
+{
+    int id;
+    char make[MAX_STRING];
+    char model[MAX_STRING];
+    int year;
+    VehicleType type;
+    float ratePerHour;
+    float ratePerDay;
+    int available;
+    int active;
+    struct VehicleNode *next;
+} Vehicle;
+
 extern Route *routeHead;
 
-/* ===== Vehicle CSV I/O ===== */
-void loadVehicles(Vehicle **headRef);
+void loadVehicles(Vehicle **head);
 void saveVehicles(Vehicle *head);
-
-/* ===== Route CSV I/O ===== */
-void loadRoutes(Route **headRef);
+void freeVehicleList(Vehicle **head);
+void loadRoutes(Route **head);
 void saveRoutes(Route *head);
-
-/* ===== Admin Menu ===== */
-void adminVehicleMenu(Vehicle **headRef);
-
-/* ===== Helpers used by other modules ===== */
+void freeRouteList(Route **head);
+void adminVehicleMenu(Vehicle **head);
+void displayVehicle(const Vehicle *v);
+void listAllVehicles(Vehicle *head);
 void displayAvailableVehicles(Vehicle *head);
 Vehicle *findVehicleById(Vehicle *head, int id);
-
+const char *vehicleTypeStr(VehicleType t);
 void displayAllRoutes(Route *head);
 Route *findRouteById(Route *head, int id);
 
-#endif /* VEHICLE_H */
+#endif // VEHICLE_H

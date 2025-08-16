@@ -11,8 +11,6 @@
 #include "customer.h"
 #include "rental.h"
 
-#define MAX_STRING 100
-
 // A temporary structure just for counting vehicle rentals
 typedef struct
 {
@@ -175,7 +173,7 @@ static void generateTopVehiclesReport(Rental *rentalHead, Vehicle *vehicleHead)
 
 // --- The Admin Menu for this Module ---
 
-void adminReportsMenu(Vehicle *vehicleHead, Customer *customerHead, Rental *rentalHead)
+void adminReportsMenu(Vehicle *vehicleHead, Customer *customerHead __attribute__((unused)), Rental *rentalHead)
 {
     int running = 1;
     system("mkdir reports 2>nul"); // Create 'reports' directory (Windows/Linux friendly)

@@ -1,57 +1,50 @@
 #ifndef RENTAL_H
 #define RENTAL_H
 
-/* Forward declarations to avoid circular includes. */
-typedef struct Vehicle Vehicle;
-typedef struct Customer Customer;
+#include "utils.h"
 
-/* Rental lifecycle status */
+// Forward Declarations
+typedef struct VehicleNode Vehicle;
+typedef struct CustomerNode Customer;
+typedef struct RouteNode Route;
+
 typedef enum
 {
-    RENT_ACTIVE = 0,
-    RENT_COMPLETED = 1,
-    RENT_CANCELLED = 2
+    RENT_ACTIVE = 1,
+    RENT_COMPLETED,
+    RENT_CANCELLED
 } RentalStatus;
-
-/* Rental types */
 typedef enum
 {
     RENT_HOURLY = 1,
-    RENT_DAILY = 2,
-    RENT_ROUTE = 3
+    RENT_DAILY,
+    RENT_ROUTE
 } RentalType;
 
-/* Rental node (linked list) */
-typedef struct Rental
+typedef struct RentalNode
 {
     int id;
     int customerId;
     int vehicleId;
-    int routeId; // >0 only for RENT_ROUTE, otherwise 0
+    int routeId;
     RentalType type;
-    char startTime[20]; // "YYYY-MM-DD HH:MM"
-    char endTime[20];   // estimated or actual on completion
-    float totalCost;
     RentalStatus status;
-    struct Rental *next;
+    char startTime[20];
+    char endTime[20];
+    float totalCost;
+    struct RentalNode *next;
 } Rental;
 
-/* CSV I/O */
 void loadRentals(Rental **head);
 void saveRentals(Rental *head);
-
-/* Creation & display */
+void freeRentalList(Rental **head);
 void createRentalByCustomer(Rental **rentalHead, Vehicle *vehicleHead, Customer *current);
-void displayAllRentals(Rental *head);
+void displayRental(const Rental *r);
+void listAllRentals(Rental *head);
 void displayRentalsByCustomer(Rental *head, int customerId);
-
-/* Find & lifecycle */
-Rental *findRentalById(Rental *head, int rentalId);
-int completeRental(Rental *r, Vehicle *vehicleHead);
-int cancelRental(Rental *r, Vehicle *vehicleHead);
-
-/* Convenience prompts for menus (admin/customer) */
 void completeRentalPrompt(Rental *rentalHead, Vehicle *vehicleHead);
 void cancelRentalPrompt(Rental *rentalHead, Vehicle *vehicleHead);
+const char *rentalTypeStr(RentalType t);
+const char *rentalStatusStr(RentalStatus s);
 
-#endif /* RENTAL_H */
+#endif // RENTAL_H

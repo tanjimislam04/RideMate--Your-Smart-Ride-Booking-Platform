@@ -1,35 +1,19 @@
 #ifndef UTILS_H
 #define UTILS_H
 
-// Input validation
+#define MAX_STRING 50
 
-// Removes leading and trailing whitespace from a string
-void trimNewline(char *str);
-
-// Returns 1 if email format is valid, otherwise 0
+void getStringInput(const char *prompt, char *buffer, int size);
+int getIntegerInput(const char *prompt, int min, int max);
+float getFloatInput(const char *prompt, float min, float max);
+void pressEnterToContinue();
+void clearScreen();
 int isValidEmail(const char *email);
-
-// Returns 1 if phone is valid (length + digits), otherwise 0
 int isValidPhone(const char *phone);
-
-// Returns 1 if the string is a valid number, otherwise 0
+unsigned long hash_string(const char *str);
+int authenticateAdmin(const char *username, const char *password);
+int generateUniqueId(void);
+void getInput(const char *prompt, char *buffer, int size);
 int isValidNumber(const char *str);
 
-// Prompt and take string input safely (removes newline)
-void getInput(const char *prompt, char *dest, int size);
-
-// Clears the input buffer to avoid issues with leftover characters
-void clearInputBuffer();
-
-// String utilities
-
-// Unique ID generator (for core version, simple counter-based)
-int generateUniqueId();
-
-// File exists check
-int fileExists(const char *filename);
-
-// Admin authentication
-int authenticateAdmin(const char *username, const char *password);
-
-#endif
+#endif // UTILS_H

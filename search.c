@@ -3,22 +3,20 @@
 
 #include <stdio.h>
 #include <string.h>
-#define MAX_STRING 100
 
 #include "search.h"
 #include "utils.h"
-
 #include "vehicle.h"
 #include "customer.h"
 #include "rental.h"
 
 // --- Vehicle Functions ---
 
-void searchVehiclesByText(Vehicle *head, const char *query)
+void searchVehiclesByText(const Vehicle *head, const char *query)
 {
     printf("\n--- Search Results for '%s' ---\n", query);
     int found = 0;
-    for (Vehicle *v = head; v; v = v->next)
+    for (const Vehicle *v = head; v; v = v->next)
     {
         if (v->active)
         {
@@ -36,13 +34,13 @@ void searchVehiclesByText(Vehicle *head, const char *query)
     }
 }
 
-void filterVehiclesByType(Vehicle *head, VehicleType type)
+void filterVehiclesByType(const Vehicle *head, const char *type)
 {
-    printf("\n--- Vehicles of Type: %s ---\n", vehicleTypeStr(type)); // vehicleTypeStr from vehicle.c
+    printf("\n--- Vehicles of Type: %s ---\n", type);
     int found = 0;
-    for (Vehicle *v = head; v; v = v->next)
+    for (const Vehicle *v = head; v; v = v->next)
     {
-        if (v->active && v->type == type)
+        if (v->active && strcmp(vehicleTypeStr(v->type), type) == 0)
         {
             displayVehicle(v);
             found = 1;
@@ -54,11 +52,11 @@ void filterVehiclesByType(Vehicle *head, VehicleType type)
     }
 }
 
-void filterVehiclesByPrice(Vehicle *head, float maxPrice)
+void filterVehiclesByPrice(const Vehicle *head, float maxPrice)
 {
     printf("\n--- Vehicles with Daily Rate under $%.2f ---\n", maxPrice);
     int found = 0;
-    for (Vehicle *v = head; v; v = v->next)
+    for (const Vehicle *v = head; v; v = v->next)
     {
         if (v->active && v->ratePerDay <= maxPrice)
         {
@@ -74,11 +72,11 @@ void filterVehiclesByPrice(Vehicle *head, float maxPrice)
 
 // --- Rental Functions ---
 
-void searchRentalsByCustomerId(Rental *head, int customerId)
+void searchRentalsByCustomerId(const Rental *head, int customerId)
 {
     printf("\n--- Searching rentals for customer ID %d ---\n", customerId);
     int found = 0;
-    for (Rental *r = head; r; r = r->next)
+    for (const Rental *r = head; r; r = r->next)
     {
         if (r->customerId == customerId)
         {
@@ -194,7 +192,7 @@ void sortVehicles(Vehicle **head, VehicleSortField field, SortOrder order)
 
 // File: search.c (The CORRECTED adminSearchMenu)
 
-void adminSearchMenu(Vehicle **vehicleHead, Rental *rentalHead)
+void adminSearchMenu(Vehicle *vehicleHead, Rental *rentalHead)
 {
     int running = 1;
     while (running)
@@ -215,20 +213,20 @@ void adminSearchMenu(Vehicle **vehicleHead, Rental *rentalHead)
         {
             char query[MAX_STRING];
             getStringInput("Enter make or model to search: ", query, MAX_STRING);
-            searchVehiclesByText(*vehicleHead, query); // Use *vehicleHead
+            searchVehiclesByText(vehicleHead, query);
             break;
         }
         case 2:
         {
             printf("Select Type: 0=CAR, 1=MOTORCYCLE, 2=TRUCK, 3=VAN\n");
             int type = getIntegerInput("Enter type (0-3): ", 0, 3);
-            filterVehiclesByType(*vehicleHead, (VehicleType)type); // Use *vehicleHead
+            filterVehiclesByType(vehicleHead, vehicleTypeStr((VehicleType)type));
             break;
         }
         case 3:
         {
             float price = getFloatInput("Enter maximum daily rate: ", 1.0, 5000.0);
-            filterVehiclesByPrice(*vehicleHead, price); // Use *vehicleHead
+            filterVehiclesByPrice(vehicleHead, price);
             break;
         }
         case 4:
@@ -240,11 +238,9 @@ void adminSearchMenu(Vehicle **vehicleHead, Rental *rentalHead)
             VehicleSortField field = (sortBy == 1) ? SORT_PRICE_DAY : SORT_YEAR;
             SortOrder sortOrder = (order == 1) ? SORT_ASC : SORT_DESC;
 
-            // Pass the double pointer directly
-            sortVehicles(vehicleHead, field, sortOrder);
+            sortVehicles(&vehicleHead, field, sortOrder);
 
-            // Display the newly sorted list
-            listAllVehicles(*vehicleHead); // Use *vehicleHead
+            listAllVehicles(vehicleHead);
             break;
         }
         case 5:
