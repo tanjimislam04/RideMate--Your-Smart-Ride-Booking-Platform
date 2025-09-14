@@ -25,7 +25,6 @@ void loadCustomers(Customer **head)
         *head = NULL;
         return;
     }
-    // Free old list if any
     while (*head)
     {
         Customer *tmp = *head;
@@ -33,7 +32,7 @@ void loadCustomers(Customer **head)
         free(tmp);
     }
     char line[512];
-    fgets(line, sizeof(line), f); // Skip header
+    fgets(line, sizeof(line), f);
     while (fgets(line, sizeof(line), f))
     {
         line[strcspn(line, "\n")] = 0;
@@ -70,15 +69,28 @@ Customer *findCustomerByUsername(Customer *head, const char *username)
             return c;
         }
     }
-    return NULL; // Move outside the loop!
+    return NULL;
 }
 
 Customer *authenticateCustomer(Customer *head, const char *username, const char *password)
 {
     Customer *c = findCustomerByUsername(head, username);
-    if (c && strcmp(c->password, password) == 0)
+    if (c)
     {
-        return c;
+        char hashed_input[17];
+        hash_password(password, hashed_input, sizeof(hashed_input));
+
+        if (strcmp(c->password, hashed_input) == 0)
+        {
+            return c;
+        }
+
+        if (strcmp(c->password, password) == 0)
+        {
+            hash_password(password, c->password, sizeof(c->password));
+            saveCustomers(head);
+            return c;
+        }
     }
     return NULL;
 }
@@ -98,15 +110,9 @@ void registerCustomer(Customer **head)
     while (1)
     {
         getInput("Enter your name: ", newCustomer->name, sizeof(newCustomer->name));
-        int namelen = strlen(newCustomer->name);
-        if (namelen == 0)
+        if (!isValidName(newCustomer->name))
         {
-            printf("Name cannot be empty. Please try again.\n");
-            continue;
-        }
-        else if (namelen < 2)
-        {
-            printf("Name too short! Please try again.\n");
+            printf("Invalid name! Name must be at least 2 characters long, contain only letters and spaces.\n");
             continue;
         }
         break;
@@ -130,22 +136,24 @@ void registerCustomer(Customer **head)
 
     while (1)
     {
-        getInput("Enter your password: ", newCustomer->password, sizeof(newCustomer->password));
-        if (strlen(newCustomer->password) < 6)
+        char tempPassword[17];
+        getInput("Enter your password: ", tempPassword, sizeof(tempPassword));
+        if (strlen(tempPassword) < 6)
         {
             printf("Password must be at least 6 characters long. Please try again.\n");
             continue;
         }
-        if (strpbrk(newCustomer->password, "0123456789") == NULL)
+        if (strpbrk(tempPassword, "0123456789") == NULL)
         {
             printf("Password must contain at least one digit. Please try again.\n");
             continue;
         }
-        if (strpbrk(newCustomer->password, "!@#$%^&*()_+") == NULL)
+        if (strpbrk(tempPassword, "!@#$%^&*()_+") == NULL)
         {
             printf("Password must contain at least one special character. Please try again.\n");
             continue;
         }
+        hash_password(tempPassword, newCustomer->password, sizeof(newCustomer->password));
         break;
     }
 
@@ -203,7 +211,16 @@ void updateCustomerProfile(Customer *c)
     char buf[100];
     getInput("New name: ", buf, sizeof(buf));
     if (strlen(buf))
-        strcpy(c->name, buf);
+    {
+        if (isValidName(buf))
+        {
+            strcpy(c->name, buf);
+        }
+        else
+        {
+            printf("Invalid name format! Name must contain only letters and spaces.\n");
+        }
+    }
 
     getInput("New email: ", buf, sizeof(buf));
     if (strlen(buf) && isValidEmail(buf))
@@ -215,7 +232,9 @@ void updateCustomerProfile(Customer *c)
 
     getInput("New password: ", buf, sizeof(buf));
     if (strlen(buf) && strlen(buf) > 3)
-        strcpy(c->password, buf);
+    {
+        hash_password(buf, c->password, sizeof(c->password));
+    }
 
     printf("Profile updated.\n");
 }
@@ -273,7 +292,6 @@ void adminCustomerMenu(Customer **head)
         }
         else if (option == 4)
         {
-            // Free old list, then import
             while (*head)
             {
                 Customer *tmp = *head;
@@ -299,14 +317,14 @@ void freeCustomerList(Customer **head)
 {
     Customer *current = *head;
     Customer *next;
-    
+
     while (current != NULL)
     {
         next = current->next;
         free(current);
         current = next;
     }
-    
+
     *head = NULL;
 }
 
@@ -317,7 +335,7 @@ void displayCustomerProfile(const Customer *c)
         printf("Customer not found.\n");
         return;
     }
-    
+
     printf("\n=== Customer Profile ===\n");
     printf("ID: %d\n", c->id);
     printf("Name: %s\n", c->name);
