@@ -1,6 +1,3 @@
-// File: dashboard.c
-// Description: Implements the logic for calculating and displaying business statistics.
-
 #include "dashboard.h"
 #include <stdio.h>
 #include <time.h>
@@ -10,10 +7,9 @@
 #include "customer.h"
 #include "rental.h"
 
-// --- Helper function to draw a simple ASCII bar ---
 static void printBar(float value, float maxValue)
 {
-    int barWidth = 40; // Max width of the bar in characters
+    int barWidth = 40;
     if (maxValue == 0)
     {
         printf("[No data]");
@@ -28,14 +24,12 @@ static void printBar(float value, float maxValue)
 
 void showAdminDashboard(Vehicle *vehicleHead, Customer *customerHead, Rental *rentalHead)
 {
-    // --- 1. Initialize all counters ---
     int totalVehicles = 0, availableVehicles = 0, rentedVehicles = 0;
     int totalCustomers = 0;
     int totalRentals = 0, activeRentals = 0;
     float totalRevenue = 0.0f;
-    float monthlyRevenue[12] = {0}; // An array to hold revenue for each month (Jan=0, Feb=1, ...)
+    float monthlyRevenue[12] = {0};
 
-    // --- 2. Calculate Vehicle Statistics ---
     for (Vehicle *v = vehicleHead; v; v = v->next)
     {
         if (v->active)
@@ -52,7 +46,6 @@ void showAdminDashboard(Vehicle *vehicleHead, Customer *customerHead, Rental *re
         }
     }
 
-    // --- 3. Calculate Customer Statistics ---
     for (Customer *c = customerHead; c; c = c->next)
     {
         if (c->active)
@@ -61,7 +54,6 @@ void showAdminDashboard(Vehicle *vehicleHead, Customer *customerHead, Rental *re
         }
     }
 
-    // --- 4. Calculate Rental and Revenue Statistics ---
     time_t now = time(NULL);
     struct tm *localTime = localtime(&now);
     int currentYear = localTime->tm_year + 1900;
@@ -78,7 +70,6 @@ void showAdminDashboard(Vehicle *vehicleHead, Customer *customerHead, Rental *re
         {
             totalRevenue += r->totalCost;
 
-            // For the bar chart, let's only consider rentals from the current year
             int year, month, day;
             if (sscanf(r->startTime, "%d-%d-%d", &year, &month, &day) == 3)
             {
@@ -94,7 +85,6 @@ void showAdminDashboard(Vehicle *vehicleHead, Customer *customerHead, Rental *re
         }
     }
 
-    // --- 5. Display the Dashboard ---
     clearScreen();
     printf("=============================================================\n");
     printf("                  ADMIN DASHBOARD (As of %d)\n", currentYear);
@@ -133,4 +123,91 @@ void showAdminDashboard(Vehicle *vehicleHead, Customer *customerHead, Rental *re
         printf(" $%.2f\n", monthlyRevenue[i]);
     }
     printf("-------------------------------------------------------------\n");
+}
+
+void showBookingCalendar(Vehicle *vehicleHead, Rental *rentalHead)
+{
+    clearScreen();
+    printf("\n--- Vehicle Booking Calendar ---\n");
+    listAllVehicles(vehicleHead);
+
+    int vehicleId = getIntegerInput("\nEnter Vehicle ID to see its calendar: ", 1, 9999);
+    Vehicle *v = findVehicleById(vehicleHead, vehicleId);
+    if (!v)
+    {
+        printf("Vehicle not found.\n");
+        return;
+    }
+
+    int year = getIntegerInput("Enter Year (e.g., 2025): ", 2020, 2030);
+    int month = getIntegerInput("Enter Month (1-12): ", 1, 12);
+
+    int daysInMonth[] = {0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+    if ((year % 4 == 0 && year % 100 != 0) || (year % 400 == 0))
+    {
+        daysInMonth[2] = 29;
+    }
+
+    struct tm firstDayOfMonth = {0};
+    firstDayOfMonth.tm_year = year - 1900;
+    firstDayOfMonth.tm_mon = month - 1;
+    firstDayOfMonth.tm_mday = 1;
+    mktime(&firstDayOfMonth);
+    int startingDay = firstDayOfMonth.tm_wday;
+
+    int booked_days[32] = {0};
+    for (int day = 1; day <= daysInMonth[month]; day++)
+    {
+        struct tm currentDayTm = {0};
+        currentDayTm.tm_year = year - 1900;
+        currentDayTm.tm_mon = month - 1;
+        currentDayTm.tm_mday = day;
+        time_t currentDayTime = mktime(&currentDayTm);
+
+        for (Rental *r = rentalHead; r; r = r->next)
+        {
+            if (r->vehicleId == vehicleId && r->status == RENT_ACTIVE)
+            {
+                time_t rentalStart, rentalEnd;
+                if (stringToTime(r->startTime, &rentalStart) && stringToTime(r->endTime, &rentalEnd))
+                {
+                    if (currentDayTime >= rentalStart && currentDayTime <= rentalEnd)
+                    {
+                        booked_days[day] = 1;
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
+    const char *months[] = {"January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"};
+    printf("\n--- Calendar for %s %s (ID: %d) | %s %d ---\n", v->make, v->model, v->id, months[month - 1], year);
+    printf(" 'XX' marks a day the vehicle is booked.\n\n");
+
+    printf("  Su  Mo  Tu  We  Th  Fr  Sa\n");
+    printf("-----------------------------\n");
+
+    for (int i = 0; i < startingDay; i++)
+    {
+        printf("    ");
+    }
+
+    for (int day = 1; day <= daysInMonth[month]; day++)
+    {
+        if (booked_days[day])
+        {
+            printf(" XX ");
+        }
+        else
+        {
+            printf(" %2d ", day);
+        }
+
+        if ((day + startingDay) % 7 == 0)
+        {
+            printf("\n");
+        }
+    }
+    printf("\n-----------------------------\n");
 }

@@ -6,5 +6,6 @@
 #include "rental.h"
 
 void showAdminDashboard(Vehicle *vehicleHead, Customer *customerHead, Rental *rentalHead);
+void showBookingCalendar(Vehicle *vehicleHead, Rental *rentalHead);
 
 #endif // DASHBOARD_H
