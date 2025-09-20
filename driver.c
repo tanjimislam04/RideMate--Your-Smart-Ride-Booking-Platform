@@ -1,6 +1,3 @@
-// File: driver.c
-// Description: Implements driver management system for RideMate
-
 #include "driver.h"
 #include "utils.h"
 #include <stdio.h>
@@ -10,15 +7,13 @@
 
 #define DRIVER_FILE "data/drivers.csv"
 
-// --- Helper Functions ---
-
 static void ensureDriverFileExists()
 {
     FILE *f = fopen(DRIVER_FILE, "r");
     if (f)
     {
         fclose(f);
-        return; // File already exists
+        return;
     }
 
     f = fopen(DRIVER_FILE, "w");
@@ -72,7 +67,7 @@ static Driver *parseDriverCSV(char *line)
 
 static int getNextDriverId(Driver *head)
 {
-    int maxId = 0;
+    int maxId = 4000; // Start from 4000 for driver IDs
     for (Driver *d = head; d; d = d->next)
     {
         if (d->id > maxId)
@@ -80,8 +75,6 @@ static int getNextDriverId(Driver *head)
     }
     return maxId + 1;
 }
-
-// --- CSV I/O Functions ---
 
 void loadDrivers(Driver **head)
 {
@@ -93,7 +86,6 @@ void loadDrivers(Driver **head)
         return;
 
     char line[512];
-    // Skip header
     if (fgets(line, sizeof(line), f))
     {
         if (strncmp(line, "id,", 3) != 0)
@@ -136,8 +128,6 @@ void saveDrivers(Driver *head)
     }
     fclose(f);
 }
-
-// --- Driver Management Functions ---
 
 Driver *findDriverById(Driver *head, int driverId)
 {
@@ -345,8 +335,6 @@ void listAvailableDrivers(Driver *head)
     }
 }
 
-// --- Driver Assignment Functions ---
-
 Driver *assignDriverToRental(Driver *head, const char *vehicleType)
 {
     Driver *driver = findAvailableDriver(head, vehicleType);
@@ -372,7 +360,6 @@ void updateDriverRating(Driver *driver, float newRating)
 {
     if (driver && newRating >= 0.0 && newRating <= 5.0)
     {
-        // Calculate new average rating
         float totalRating = driver->rating * driver->totalTrips + newRating;
         driver->totalTrips++;
         driver->rating = totalRating / driver->totalTrips;
@@ -390,8 +377,6 @@ void completeDriverTrip(Driver *driver, float tripEarnings)
         driver->lastActive = time(NULL);
     }
 }
-
-// --- Driver Statistics ---
 
 void showDriverStatistics(Driver *head)
 {
@@ -441,7 +426,6 @@ void showTopDrivers(Driver *head, int count)
         return;
     }
 
-    // Create a temporary array to sort drivers
     int driverCount = 0;
     for (Driver *d = head; d; d = d->next)
         driverCount++;
@@ -456,7 +440,6 @@ void showTopDrivers(Driver *head, int count)
         drivers[i++] = d;
     }
 
-    // Sort by rating (bubble sort for simplicity)
     for (int i = 0; i < driverCount - 1; i++)
     {
         for (int j = 0; j < driverCount - i - 1; j++)
@@ -484,8 +467,6 @@ void showTopDrivers(Driver *head, int count)
 
     free(drivers);
 }
-
-// --- Memory Management ---
 
 void freeDriverList(Driver **head)
 {
