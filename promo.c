@@ -1,6 +1,3 @@
-// File: promo.c
-// Description: Implements the logic for managing and applying promo codes.
-
 #include "promo.h"
 #include "utils.h"
 #include <stdio.h>
@@ -9,14 +6,13 @@
 
 #define PROMO_FILE "data/promos.csv"
 
-// --- Helper to create CSV file with a header if it doesn't exist ---
 static void ensurePromoFileExists()
 {
     FILE *f = fopen(PROMO_FILE, "r");
     if (f)
     {
         fclose(f);
-        return; // File already exists
+        return;
     }
 
     f = fopen(PROMO_FILE, "w");
@@ -27,15 +23,12 @@ static void ensurePromoFileExists()
     }
 }
 
-// --- CSV and Linked List Logic ---
-
 static Promo *parsePromoCSV(char *line)
 {
     Promo *p = (Promo *)malloc(sizeof(Promo));
     if (!p)
         return NULL;
     p->next = NULL;
-    // Format: code,discountPercent,isActive
     sscanf(line, "%19[^,],%f,%d", p->code, &p->discountPercent, &p->isActive);
     return p;
 }
@@ -51,7 +44,7 @@ void loadPromos(Promo **head)
     }
 
     char line[128];
-    fgets(line, sizeof(line), f); // Skip header
+    fgets(line, sizeof(line), f);
 
     while (fgets(line, sizeof(line), f))
     {
@@ -85,21 +78,17 @@ void savePromos(Promo *head)
     fclose(f);
 }
 
-// --- Core Logic ---
-
 Promo *findActivePromoByCode(Promo *head, const char *code)
 {
     for (Promo *p = head; p; p = p->next)
     {
         if (p->isActive && strcmp(p->code, code) == 0)
         {
-            return p; // Found an active code
+            return p;
         }
     }
-    return NULL; // Not found or not active
+    return NULL;
 }
-
-// --- Admin Helper Functions (private to this file) ---
 
 static void addPromo(Promo **head)
 {
@@ -113,9 +102,9 @@ static void addPromo(Promo **head)
     printf("\n--- Create New Promo Code ---\n");
     getStringInput("Enter new promo code (e.g., EID25): ", newPromo->code, 20);
     newPromo->discountPercent = getFloatInput("Enter discount percentage (e.g., 10.5): ", 0.1, 100.0);
-    newPromo->isActive = 1; // Active by default
+    newPromo->isActive = 1;
 
-    // Insert at head and save
+    newPromo->next = *head;
     newPromo->next = *head;
     *head = newPromo;
     savePromos(*head);
@@ -144,7 +133,6 @@ static void togglePromoActive(Promo *head)
     listAllPromos(head);
     getStringInput("\nEnter promo code to activate/deactivate: ", code, 20);
 
-    // We need to find the code regardless of its active status
     Promo *target = NULL;
     for (Promo *current = head; current; current = current->next)
     {
@@ -157,7 +145,7 @@ static void togglePromoActive(Promo *head)
 
     if (target)
     {
-        target->isActive = !target->isActive; // Flip the status (1 becomes 0, 0 becomes 1)
+        target->isActive = !target->isActive;
         savePromos(head);
         printf("Promo code '%s' is now %s.\n", target->code, target->isActive ? "ACTIVE" : "INACTIVE");
     }
@@ -166,8 +154,6 @@ static void togglePromoActive(Promo *head)
         printf("Promo code '%s' not found.\n", code);
     }
 }
-
-// --- The Public Admin Menu ---
 
 void adminPromoMenu(Promo **head)
 {
@@ -201,8 +187,6 @@ void adminPromoMenu(Promo **head)
             pressEnterToContinue();
     }
 }
-
-// --- Memory Management ---
 
 void freePromoList(Promo **head)
 {
