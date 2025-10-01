@@ -1,22 +1,20 @@
-// File: vehicle.c (Corrected and Final Version)
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include "utils.h"
 #include "vehicle.h"
+#include "rental.h"
 
 #define VEHICLE_FILE "data/vehicles.csv"
 #define ROUTE_FILE "data/routes.csv"
 
-// Global pointer, declared 'extern' in the header
-Route *routeHead = NULL;
+extern Route *routeHead;
 
-// Static ID counters for this module
 static int nextVehicleId = 2001;
 static int nextRouteId = 3001;
 
-// --- Helper to create CSV files with headers if they don't exist ---
+static void displayStarRating(float rating);
+
 static void ensureCsvWithHeader(const char *path, const char *headerLine)
 {
     FILE *r = fopen(path, "r");
@@ -24,19 +22,20 @@ static void ensureCsvWithHeader(const char *path, const char *headerLine)
     {
         fclose(r);
         return;
-    } // File already exists
+    }
     FILE *w = fopen(path, "w");
     if (!w)
     {
         printf("Error: could not create %s\n", path);
+        perror("File creation error");
         return;
     }
     fputs(headerLine, w);
     fputc('\n', w);
     fclose(w);
+    printf("Created new CSV file: %s\n", path);
 }
 
-// --- ID Management ---
 static void adjustVehicleNextId(Vehicle *head)
 {
     int maxId = 2000;
@@ -55,15 +54,21 @@ static void adjustRouteNextId(Route *head)
     nextRouteId = maxId + 1;
 }
 
-// --- CSV Parsing ---
 static Vehicle *parseVehicleCSV(char *line)
 {
     Vehicle *v = (Vehicle *)malloc(sizeof(Vehicle));
     if (!v)
         return NULL;
-    // CSV: id,make,model,year,type,ratePerDay,ratePerHour,active,available
-    sscanf(line, "%d,%49[^,],%49[^,],%d,%d,%f,%f,%d,%d",
-           &v->id, v->make, v->model, &v->year, (int *)&v->type, &v->ratePerDay, &v->ratePerHour, &v->active, &v->available);
+    
+    int result = sscanf(line, "%d,%49[^,],%49[^,],%d,%d,%f,%f,%d,%d,%d,%f",
+           &v->id, v->make, v->model, &v->year, (int *)&v->type, &v->ratePerDay, &v->ratePerHour, &v->active, &v->available, &v->ratingCount, &v->averageRating);
+    
+    if (result != 11) {
+        printf("Warning: Failed to parse vehicle line: %s (parsed %d fields)\n", line, result);
+        free(v);
+        return NULL;
+    }
+    
     v->next = NULL;
     return v;
 }
@@ -73,25 +78,26 @@ static Route *parseRouteCSV(char *line)
     Route *r = (Route *)malloc(sizeof(Route));
     if (!r)
         return NULL;
-    // CSV: id,name,from,to,baseFare,etaMin,active
     sscanf(line, "%d,%49[^,],%49[^,],%49[^,],%f,%d,%d",
            &r->id, r->name, r->from, r->to, &r->baseFare, &r->etaMin, &r->active);
     r->next = NULL;
     return r;
 }
 
-// --- File I/O Functions ---
 void loadVehicles(Vehicle **head)
 {
-    ensureCsvWithHeader(VEHICLE_FILE, "id,make,model,year,type,ratePerDay,ratePerHour,active,available\n");
+    ensureCsvWithHeader(VEHICLE_FILE, "id,make,model,year,type,ratePerDay,ratePerHour,active,available,ratingCount,averageRating\n");
     FILE *f = fopen(VEHICLE_FILE, "r");
     if (!f)
     {
+        printf("Warning: Could not open %s for reading\n", VEHICLE_FILE);
+        perror("File error");
         *head = NULL;
         return;
     }
     char line[256];
     fgets(line, sizeof(line), f); // Skip header
+    int count = 0;
     while (fgets(line, sizeof(line), f))
     {
         line[strcspn(line, "\n")] = 0;
@@ -100,23 +106,36 @@ void loadVehicles(Vehicle **head)
         {
             v->next = *head;
             *head = v;
+            count++;
         }
     }
     fclose(f);
     adjustVehicleNextId(*head);
+    printf("Loaded %d vehicles from %s\n", count, VEHICLE_FILE);
 }
 
 void saveVehicles(Vehicle *head)
 {
     FILE *f = fopen(VEHICLE_FILE, "w");
     if (!f)
+    {
+        printf("Error: Could not open file %s for writing\n", VEHICLE_FILE);
+        perror("File error");
         return;
-    fprintf(f, "id,make,model,year,type,ratePerDay,ratePerHour,active,available\n");
+    }
+    
+    fprintf(f, "id,make,model,year,type,ratePerDay,ratePerHour,active,available,ratingCount,averageRating\n");
+    int count = 0;
     for (Vehicle *v = head; v; v = v->next)
     {
-        fprintf(f, "%d,%s,%s,%d,%d,%.2f,%.2f,%d,%d\n", v->id, v->make, v->model, v->year, v->type, v->ratePerDay, v->ratePerHour, v->active, v->available);
+        fprintf(f, "%d,%s,%s,%d,%d,%.2f,%.2f,%d,%d,%d,%.2f\n", 
+                v->id, v->make, v->model, v->year, v->type, 
+                v->ratePerDay, v->ratePerHour, v->active, v->available, 
+                v->ratingCount, v->averageRating);
+        count++;
     }
     fclose(f);
+    printf("Successfully saved %d vehicles to %s\n", count, VEHICLE_FILE);
 }
 
 void loadRoutes(Route **head)
@@ -129,7 +148,7 @@ void loadRoutes(Route **head)
         return;
     }
     char line[256];
-    fgets(line, sizeof(line), f); // Skip header
+    fgets(line, sizeof(line), f);
     while (fgets(line, sizeof(line), f))
     {
         line[strcspn(line, "\n")] = 0;
@@ -141,7 +160,7 @@ void loadRoutes(Route **head)
         }
     }
     fclose(f);
-    routeHead = *head; // Update the global head
+    routeHead = *head;
     adjustRouteNextId(*head);
 }
 
@@ -156,10 +175,9 @@ void saveRoutes(Route *head)
         fprintf(f, "%d,%s,%s,%s,%.2f,%d,%d\n", r->id, r->name, r->from, r->to, r->baseFare, r->etaMin, r->active);
     }
     fclose(f);
-    routeHead = head; // Update the global head
+    routeHead = head;
 }
 
-// --- Find Functions ---
 Vehicle *findVehicleById(Vehicle *head, int id)
 {
     for (Vehicle *v = head; v; v = v->next)
@@ -176,7 +194,6 @@ Route *findRouteById(Route *head, int id)
     return NULL;
 }
 
-// --- Display Functions ---
 const char *vehicleTypeStr(VehicleType t)
 {
     switch (t)
@@ -198,9 +215,20 @@ void displayVehicle(const Vehicle *v)
 {
     if (!v)
         return;
-    printf("ID: %-5d | %s %s (%d) | Type: %-10s | Rate: $%.2f/day, $%.2f/hr | Status: %s\n",
+    printf("ID: %-5d | %s %s (%d) | Type: %-10s | Rate: $%.2f/day, $%.2f/hr | Status: %s | Rating: ",
            v->id, v->make, v->model, v->year, vehicleTypeStr(v->type), v->ratePerDay, v->ratePerHour,
            v->available ? "Available" : "Rented");
+
+    if (v->ratingCount > 0)
+    {
+        displayStarRating(v->averageRating);
+        printf(" (%.1f/5.0, %d reviews)", v->averageRating, v->ratingCount);
+    }
+    else
+    {
+        printf("No ratings yet");
+    }
+    printf("\n");
 }
 
 void listAllVehicles(Vehicle *head)
@@ -226,6 +254,44 @@ void displayAvailableVehicles(Vehicle *head)
         printf("No vehicles are currently available.\n");
 }
 
+void displayVehicleAvailabilitySchedule(Vehicle *head, Rental *rentalHead)
+{
+    printf("\n--- Vehicle Availability Schedule ---\n");
+    int found = 0;
+    
+    for (Vehicle *v = head; v; v = v->next)
+    {
+        if (v->active)
+        {
+            printf("\nVehicle #%d: %s %s (%s)\n", v->id, v->make, v->model, vehicleTypeStr(v->type));
+            printf("Status: %s\n", v->available ? "Available" : "Currently Rented");
+            
+            // Show current rental if any
+            int hasActiveRental = 0;
+            for (Rental *r = rentalHead; r; r = r->next)
+            {
+                if (r->vehicleId == v->id && r->status == RENT_ACTIVE)
+                {
+                    printf("  Current Rental: ID %d (Customer %d) - %s to %s\n", 
+                           r->id, r->customerId, r->startTime, r->endTime);
+                    hasActiveRental = 1;
+                    break;
+                }
+            }
+            
+            if (!hasActiveRental)
+            {
+                printf("  No active rentals\n");
+            }
+            
+            found = 1;
+        }
+    }
+    
+    if (!found)
+        printf("No vehicles found.\n");
+}
+
 void displayAllRoutes(Route *head)
 {
     printf("\n--- All Available Routes ---\n");
@@ -242,22 +308,53 @@ void displayAllRoutes(Route *head)
         printf("No routes are currently configured.\n");
 }
 
-// --- Admin Helper Functions ---
+void addVehicleRating(Vehicle *v, int rating)
+{
+    if (!v || rating < 1 || rating > 5)
+        return;
+
+    float totalRating = v->averageRating * v->ratingCount + rating;
+    v->ratingCount++;
+    v->averageRating = totalRating / v->ratingCount;
+}
+
+static void displayStarRating(float rating)
+{
+    int fullStars = (int)rating;
+    int hasHalfStar = (rating - fullStars) >= 0.5;
+
+    for (int i = 0; i < fullStars; i++)
+        printf("★");
+    if (hasHalfStar)
+        printf("☆");
+    for (int i = fullStars + hasHalfStar; i < 5; i++)
+        printf("☆");
+}
+
 static void addVehicleInteractive(Vehicle **head)
 {
     Vehicle *v = (Vehicle *)malloc(sizeof(Vehicle));
+    if (!v) {
+        printf("Error: Memory allocation failed\n");
+        return;
+    }
+    
     v->id = nextVehicleId++;
     getStringInput("Enter Brand Name: ", v->make, MAX_STRING);
     getStringInput("Enter Model: ", v->model, MAX_STRING);
     v->year = getIntegerInput("Enter Year: ", 2000, 2025);
     printf("Types: 0=Car, 1=Motorcycle, 2=Truck, 3=Van\n");
     v->type = (VehicleType)getIntegerInput("Enter Type: ", 0, 3);
-    v->ratePerDay = getFloatInput("Enter Rate per Day: ", 1.0, 20000.0);
-    v->ratePerHour = getFloatInput("Enter Rate per Hour: ", 1.0, 1000.0);
+    v->ratePerDay = getFloatInput("Enter Rate per Day: ", 1.0, 500000.0);
+    v->ratePerHour = getFloatInput("Enter Rate per Hour: ", 1.0, 5000.0);
     v->available = 1;
     v->active = 1;
+    v->ratingCount = 0;
+    v->averageRating = 0.0;
     v->next = *head;
     *head = v;
+    
+    printf("Adding vehicle to memory: ID=%d, Make=%s, Model=%s\n", v->id, v->make, v->model);
     saveVehicles(*head);
     printf("Vehicle #%d added successfully.\n", v->id);
 }
@@ -291,7 +388,7 @@ static void softDeleteVehicleInteractive(Vehicle *head)
         return;
     }
 
-    v->active = !v->active; // Flip the status
+    v->active = !v->active;
     saveVehicles(head);
     printf("Vehicle #%d is now %s.\n", v->id, v->active ? "Active" : "Inactive");
 }
@@ -312,7 +409,6 @@ static void addRouteInteractive(Route **head)
     printf("Route #%d added successfully.\n", r->id);
 }
 
-// --- Admin Menus ---
 static void adminRouteMenu(Route **head)
 {
     int running = 1;
@@ -327,7 +423,6 @@ static void adminRouteMenu(Route **head)
         switch (choice)
         {
         case 1:
-            listAllVehicles((Vehicle *)*head);
             displayAllRoutes(*head);
             break;
         case 2:
@@ -342,7 +437,7 @@ static void adminRouteMenu(Route **head)
     }
 }
 
-void adminVehicleMenu(Vehicle **head)
+void adminVehicleMenu(Vehicle **head, Rental *rentalHead)
 {
     int running = 1;
     while (running)
@@ -354,8 +449,10 @@ void adminVehicleMenu(Vehicle **head)
         printf("3. List All Vehicles\n");
         printf("4. Toggle Vehicle Active Status (Soft Delete)\n");
         printf("5. Manage Routes\n");
-        printf("6. Back to Main Admin Menu\n");
-        int choice = getIntegerInput("Choice: ", 1, 6);
+        printf("6. View Top Rated Vehicles\n");
+        printf("7. View Vehicle Availability Schedule\n");
+        printf("8. Back to Main Admin Menu\n");
+        int choice = getIntegerInput("Choice: ", 1, 8);
         switch (choice)
         {
         case 1:
@@ -374,6 +471,17 @@ void adminVehicleMenu(Vehicle **head)
             adminRouteMenu(&routeHead);
             break;
         case 6:
+        {
+            int count = getIntegerInput("Show top how many vehicles? (1-10): ", 1, 10);
+            displayTopRatedVehicles(*head, count);
+            pressEnterToContinue();
+            break;
+        }
+        case 7:
+            displayVehicleAvailabilitySchedule(*head, rentalHead);
+            pressEnterToContinue();
+            break;
+        case 8:
             running = 0;
             break;
         }
@@ -395,6 +503,79 @@ void freeVehicleList(Vehicle **head)
     }
 
     *head = NULL;
+}
+
+void updateVehicleRating(Vehicle *head, int vehicleId, int newRating)
+{
+    Vehicle *v = findVehicleById(head, vehicleId);
+    if (v && newRating >= 1 && newRating <= 5)
+    {
+        float totalRating = v->averageRating * v->ratingCount;
+        v->ratingCount++;
+        v->averageRating = (totalRating + newRating) / v->ratingCount;
+    }
+}
+
+void displayTopRatedVehicles(Vehicle *head, int count)
+{
+    if (!head)
+    {
+        printf("No vehicles found.\n");
+        return;
+    }
+
+    int totalVehicles = 0;
+    for (Vehicle *v = head; v; v = v->next)
+    {
+        if (v->ratingCount > 0)
+            totalVehicles++;
+    }
+
+    if (totalVehicles == 0)
+    {
+        printf("No vehicles have been rated yet.\n");
+        return;
+    }
+
+    Vehicle **ratedVehicles = malloc(totalVehicles * sizeof(Vehicle *));
+    if (!ratedVehicles)
+        return;
+
+    int index = 0;
+    for (Vehicle *v = head; v; v = v->next)
+    {
+        if (v->ratingCount > 0)
+        {
+            ratedVehicles[index++] = v;
+        }
+    }
+
+    for (int i = 0; i < totalVehicles - 1; i++)
+    {
+        for (int j = 0; j < totalVehicles - i - 1; j++)
+        {
+            if (ratedVehicles[j]->averageRating < ratedVehicles[j + 1]->averageRating)
+            {
+                Vehicle *temp = ratedVehicles[j];
+                ratedVehicles[j] = ratedVehicles[j + 1];
+                ratedVehicles[j + 1] = temp;
+            }
+        }
+    }
+
+    printf("\n--- Top %d Rated Vehicles ---\n", count > totalVehicles ? totalVehicles : count);
+    printf("%-5s %-15s %-15s %-8s %-10s %-15s\n", "ID", "Make", "Model", "Type", "Rating", "Reviews");
+    printf("----------------------------------------------------------------\n");
+
+    for (int i = 0; i < count && i < totalVehicles; i++)
+    {
+        Vehicle *v = ratedVehicles[i];
+        printf("%-5d %-15s %-15s %-8s ", v->id, v->make, v->model, vehicleTypeStr(v->type));
+        displayStarRating(v->averageRating);
+        printf(" (%.1f) %-5d\n", v->averageRating, v->ratingCount);
+    }
+
+    free(ratedVehicles);
 }
 
 void freeRouteList(Route **head)

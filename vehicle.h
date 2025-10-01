@@ -3,6 +3,9 @@
 
 #include "utils.h"
 
+// Forward declaration for Rental type
+typedef struct RentalNode Rental;
+
 typedef enum
 {
     VTYPE_CAR,
@@ -34,24 +37,27 @@ typedef struct VehicleNode
     float ratePerDay;
     int available;
     int active;
+    int ratingCount;     // Number of ratings received
+    float averageRating; // Average rating (1.0 - 5.0)
     struct VehicleNode *next;
 } Vehicle;
-
-extern Route *routeHead;
-
 void loadVehicles(Vehicle **head);
 void saveVehicles(Vehicle *head);
 void freeVehicleList(Vehicle **head);
 void loadRoutes(Route **head);
 void saveRoutes(Route *head);
 void freeRouteList(Route **head);
-void adminVehicleMenu(Vehicle **head);
+void adminVehicleMenu(Vehicle **head, Rental *rentalHead);
 void displayVehicle(const Vehicle *v);
 void listAllVehicles(Vehicle *head);
 void displayAvailableVehicles(Vehicle *head);
+void displayVehicleAvailabilitySchedule(Vehicle *head, Rental *rentalHead);
 Vehicle *findVehicleById(Vehicle *head, int id);
 const char *vehicleTypeStr(VehicleType t);
 void displayAllRoutes(Route *head);
 Route *findRouteById(Route *head, int id);
+void addVehicleRating(Vehicle *v, int rating);
+void updateVehicleRating(Vehicle *head, int vehicleId, int newRating);
+void displayTopRatedVehicles(Vehicle *head, int count);
 
 #endif // VEHICLE_H
