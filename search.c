@@ -1,6 +1,3 @@
-// File: search.c
-// The actual logic for searching and filtering our linked lists.
-
 #include <stdio.h>
 #include <string.h>
 
@@ -10,8 +7,6 @@
 #include "customer.h"
 #include "rental.h"
 
-// --- Vehicle Functions ---
-
 void searchVehiclesByText(const Vehicle *head, const char *query)
 {
     printf("\n--- Search Results for '%s' ---\n", query);
@@ -20,10 +15,9 @@ void searchVehiclesByText(const Vehicle *head, const char *query)
     {
         if (v->active)
         {
-            // A real pro version would make this case-insensitive!
             if (strstr(v->make, query) || strstr(v->model, query))
             {
-                displayVehicle(v); // This function is in vehicle.c
+                displayVehicle(v);
                 found = 1;
             }
         }
@@ -70,8 +64,6 @@ void filterVehiclesByPrice(const Vehicle *head, float maxPrice)
     }
 }
 
-// --- Rental Functions ---
-
 void searchRentalsByCustomerId(const Rental *head, int customerId)
 {
     printf("\n--- Searching rentals for customer ID %d ---\n", customerId);
@@ -80,7 +72,7 @@ void searchRentalsByCustomerId(const Rental *head, int customerId)
     {
         if (r->customerId == customerId)
         {
-            displayRental(r); // Assumes displayRental exists in rental.c
+            displayRental(r);
             found = 1;
         }
     }
@@ -90,13 +82,10 @@ void searchRentalsByCustomerId(const Rental *head, int customerId)
     }
 }
 
-// --- Vehicle Sorting ---
-
 int compareVehicles(const Vehicle *a, const Vehicle *b, VehicleSortField field, SortOrder order)
 {
     float diff = 0;
 
-    // Calculate the difference based on the sort field
     switch (field)
     {
     case SORT_PRICE_DAY:
@@ -106,19 +95,17 @@ int compareVehicles(const Vehicle *a, const Vehicle *b, VehicleSortField field, 
         diff = a->ratePerHour - b->ratePerHour;
         break;
     case SORT_YEAR:
-        // Cast to float to handle subtraction correctly
         diff = (float)(a->year - b->year);
         break;
     }
 
-    // Return true (1) if a swap is needed, false (0) otherwise
     if (order == SORT_ASC)
     {
-        return diff > 0; // For ascending, swap if a > b
+        return diff > 0;
     }
     else
     {
-        return diff < 0; // For descending, swap if a < b
+        return diff < 0;
     }
 }
 
@@ -126,7 +113,7 @@ void sortVehicles(Vehicle **head, VehicleSortField field, SortOrder order)
 {
     if (head == NULL || *head == NULL || (*head)->next == NULL)
     {
-        return; // Nothing to sort
+        return;
     }
 
     int swapped;
@@ -139,16 +126,11 @@ void sortVehicles(Vehicle **head, VehicleSortField field, SortOrder order)
 
         while (current->next != NULL)
         {
-            // Use the compare function to see if we need to swap
             if (compareVehicles(current, current->next, field, order))
             {
 
-                // --- SWAP THE DATA, NOT THE NODES ---
                 Vehicle temp;
                 Vehicle *nextNode = current->next;
-
-                // 1. Copy all DATA from 'current' node to a temporary struct
-                //    (We don't need to copy the 'next' pointer)
                 temp.id = current->id;
                 strcpy(temp.make, current->make);
                 strcpy(temp.model, current->model);
@@ -159,7 +141,6 @@ void sortVehicles(Vehicle **head, VehicleSortField field, SortOrder order)
                 temp.active = current->active;
                 temp.available = current->available;
 
-                // 2. Copy all DATA from 'nextNode' to 'current' node
                 current->id = nextNode->id;
                 strcpy(current->make, nextNode->make);
                 strcpy(current->model, nextNode->model);
@@ -170,7 +151,6 @@ void sortVehicles(Vehicle **head, VehicleSortField field, SortOrder order)
                 current->active = nextNode->active;
                 current->available = nextNode->available;
 
-                // 3. Copy all DATA from the temporary struct back to 'nextNode'
                 nextNode->id = temp.id;
                 strcpy(nextNode->make, temp.make);
                 strcpy(nextNode->model, temp.model);
@@ -189,8 +169,6 @@ void sortVehicles(Vehicle **head, VehicleSortField field, SortOrder order)
 
     printf("\nList has been sorted.\n");
 }
-
-// File: search.c (The CORRECTED adminSearchMenu)
 
 void adminSearchMenu(Vehicle *vehicleHead, Rental *rentalHead)
 {
