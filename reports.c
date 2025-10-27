@@ -1,6 +1,3 @@
-// File: reports.c
-// Description: Implements logic for generating CSV business reports.
-
 #include "reports.h"
 #include "utils.h"
 #include <stdio.h>
@@ -11,7 +8,6 @@
 #include "customer.h"
 #include "rental.h"
 
-// A temporary structure just for counting vehicle rentals
 typedef struct
 {
     int vehicleId;
@@ -20,7 +16,6 @@ typedef struct
     char model[MAX_STRING];
 } VehicleUsage;
 
-// --- Helper for creating timestamped filenames ---
 static void generate_report_filename(char *buffer, int size, const char *prefix)
 {
     time_t now = time(NULL);
@@ -28,16 +23,13 @@ static void generate_report_filename(char *buffer, int size, const char *prefix)
     snprintf(buffer, size, "reports/%s_%04d-%02d-%02d.csv", prefix, t->tm_year + 1900, t->tm_mon + 1, t->tm_mday);
 }
 
-// --- Report Generation Functions ---
-
 static void generateMonthlyRevenueReport(Rental *rentalHead)
 {
     printf("\n--- Monthly Revenue Report ---\n");
     int year = getIntegerInput("Enter year to generate report for (e.g., 2025): ", 2020, 2100);
 
-    float monthly_revenue[12] = {0}; // Jan=0, Feb=1, ...
+    float monthly_revenue[12] = {0};
 
-    // Loop through all rentals and sum up revenue by month for the chosen year
     for (Rental *r = rentalHead; r; r = r->next)
     {
         if (r->status == RENT_COMPLETED)
@@ -53,7 +45,6 @@ static void generateMonthlyRevenueReport(Rental *rentalHead)
         }
     }
 
-    // Create the report file
     char filename[128];
     snprintf(filename, sizeof(filename), "reports/revenue_report_%d.csv", year);
 
@@ -68,7 +59,6 @@ static void generateMonthlyRevenueReport(Rental *rentalHead)
     printf("%-10s | %s\n", "Month", "Revenue");
     printf("-------------------------\n");
 
-    // Write header and data to CSV and also print to console
     fprintf(f, "Month,Revenue\n");
     const char *months[] = {"January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"};
     for (int i = 0; i < 12; i++)
@@ -81,12 +71,10 @@ static void generateMonthlyRevenueReport(Rental *rentalHead)
     printf("\nSuccessfully generated monthly revenue report: '%s'\n", filename);
 }
 
-// This is a comparison function needed for qsort
 static int compareVehicleUsage(const void *a, const void *b)
 {
     const VehicleUsage *usageA = (const VehicleUsage *)a;
     const VehicleUsage *usageB = (const VehicleUsage *)b;
-    // Sort in descending order (highest count first)
     return usageB->rentalCount - usageA->rentalCount;
 }
 
@@ -94,7 +82,6 @@ static void generateTopVehiclesReport(Rental *rentalHead, Vehicle *vehicleHead)
 {
     printf("\n--- Top Rented Vehicles Report ---\n");
 
-    // First, count how many vehicles we have to size our counter array
     int vehicle_count = 0;
     for (Vehicle *v = vehicleHead; v; v = v->next)
     {
@@ -108,7 +95,6 @@ static void generateTopVehiclesReport(Rental *rentalHead, Vehicle *vehicleHead)
         return;
     }
 
-    // Create a temporary array to hold usage stats for each vehicle
     VehicleUsage *usage_stats = (VehicleUsage *)malloc(vehicle_count * sizeof(VehicleUsage));
     int count = 0;
     for (Vehicle *v = vehicleHead; v; v = v->next)
@@ -125,7 +111,6 @@ static void generateTopVehiclesReport(Rental *rentalHead, Vehicle *vehicleHead)
         }
     }
 
-    // Loop through all rentals and increment the count for the rented vehicle
     for (Rental *r = rentalHead; r; r = r->next)
     {
         for (int i = 0; i < vehicle_count; i++)
@@ -138,10 +123,8 @@ static void generateTopVehiclesReport(Rental *rentalHead, Vehicle *vehicleHead)
         }
     }
 
-    // Sort the usage stats array using C's standard qsort
     qsort(usage_stats, vehicle_count, sizeof(VehicleUsage), compareVehicleUsage);
 
-    // Create the report file
     char filename[128];
     generate_report_filename(filename, sizeof(filename), "top_vehicles_report");
 
@@ -157,9 +140,8 @@ static void generateTopVehiclesReport(Rental *rentalHead, Vehicle *vehicleHead)
     printf("%-5s %-10s %-15s %-15s\n", "Rank", "Vehicle ID", "Model", "Times Rented");
     printf("---------------------------------------------------\n");
 
-    // Write header and data
     fprintf(f, "Rank,VehicleID,Make,Model,RentalCount\n");
-    int top_n = vehicle_count < 10 ? vehicle_count : 10; // Show top 10 or less
+    int top_n = vehicle_count < 10 ? vehicle_count : 10;
     for (int i = 0; i < top_n; i++)
     {
         fprintf(f, "%d,%d,%s,%s,%d\n", i + 1, usage_stats[i].vehicleId, usage_stats[i].make, usage_stats[i].model, usage_stats[i].rentalCount);
@@ -167,16 +149,14 @@ static void generateTopVehiclesReport(Rental *rentalHead, Vehicle *vehicleHead)
     }
 
     fclose(f);
-    free(usage_stats); // Don't forget to free the memory!
+    free(usage_stats);
     printf("\nSuccessfully generated top vehicles report: '%s'\n", filename);
 }
-
-// --- The Admin Menu for this Module ---
 
 void adminReportsMenu(Vehicle *vehicleHead, Customer *customerHead __attribute__((unused)), Rental *rentalHead)
 {
     int running = 1;
-    system("mkdir reports 2>nul"); // Create 'reports' directory (Windows/Linux friendly)
+    system("mkdir reports 2>nul");
 
     while (running)
     {
